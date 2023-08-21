@@ -1,0 +1,158 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimal Mix</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+</head>
+
+<body>
+<h1 class="text-center my-4">Welcome to the Optimal Feed Mix Generator</h1>
+
+<div class="container">
+    <!-- Tab Navigation -->
+    <ul class="nav nav-tabs">
+        <li class="nav-item">
+            <a class="nav-link active" href="#materials" data-toggle="tab">Materials</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#attributes" data-toggle="tab">Material Attributes</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#recipe" data-toggle="tab">Selected Recipe</a>
+        </li>
+    </ul>
+
+    <!-- Tab Contents -->
+    <div class="tab-content mt-4">
+        <!-- Materials Data -->
+        <div class="tab-pane fade show active" id="materials">
+            <h3 class="mb-4">Materials:</h3>
+            <table class="table table-bordered table-hover">
+                <thead>
+                <tr>
+                    <th>Material Name</th>
+                    <th>Cost per Tonne</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for material_data in materials %}
+                <tr>
+                    <td>{{ material_data.name }}</td>
+                    <td>{{ material_data.cost_per_tonne }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Selected Recipe Data -->
+        <div class="tab-pane fade" id="recipe">
+            <h3 class="mb-4">Selected Recipe: <span class="font-weight-bold">{{ selected_recipe.name }}</span></h3>
+            <table class="table table-bordered table-hover">
+                <thead>
+                <tr>
+                    <th>Material Name</th>
+                    <th>Min Percentage</th>
+                    <th>Max Percentage</th>
+                    <th>Min Weight (kg/ton)</th>
+                    <th>Max Weight (kg/ton)</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for raw_material in selected_recipe.raw_materials %}
+                <tr>
+                    <td>{{ raw_material.name }}</td>
+                    <td>{{ raw_material.min_percentage }}</td>
+                    <td>{{ raw_material.max_percentage }}</td>
+                    <td>{{ raw_material.min_weight }}</td>
+                    <td>{{ raw_material.max_weight }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+
+
+        <div class="tab-pane fade" id="attributes">
+            <h3 class="mb-4">Material Attributes:</h3>
+            <table class="table table-bordered table-hover">
+                <thead>
+                <tr>
+                    <th>Material Name</th>
+                    {% for attribute_name in all_attribute_names %}
+                    <th>{{ attribute_name }}</th>
+                    {% endfor %}
+                </tr>
+                </thead>
+                <tbody>
+                {% for material in materials_attributes %}
+                <tr>
+                    <td>{{ material.name }}</td>
+                    {% for attribute_name in all_attribute_names %}
+                    <td>{{ material.attributes.attribute_name }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<form method="post" class="text-center my-4">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-primary btn-lg">Find Optimal Mix</button>
+</form>
+
+
+<div class="text-center my-4">
+    <a href="{% url 'download_pdf' %}" class="btn btn-secondary btn-lg">Download Data as PDF</a>
+</div>
+
+{% if result %}
+<div class="container my-4">
+    <h2 class="mb-3">Optimal Mix Results:</h2>
+    <ul class="list-group">
+        {% for material, percentage in result.items %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ material }}
+            <span class="badge badge-primary badge-pill">{{ percentage }}%</span>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+
+<script>
+    $(document).ready(function(){
+        // Listen to tab change
+        $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+            var activeTab = $(e.target).attr('href').slice(1); // Get the activated tab ID
+            $('#active_tab').val(activeTab); // Update the hidden input
+        });
+    
+        // Check from the server if an active tab has been set
+        var serverActiveTab = "{{ active_tab }}"; // Passed from Django
+        if (serverActiveTab) {
+            $('.nav-link').removeClass('active');
+            $('.tab-pane').removeClass('show active');
+            $('#' + serverActiveTab).addClass('show active');
+            $('a[href="#' + serverActiveTab + '"]').addClass('active');
+        }
+    });
+    </script>
+
+
+</body>
+
+
+</html>
